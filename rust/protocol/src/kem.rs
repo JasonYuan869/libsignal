@@ -51,10 +51,6 @@
 //! ```
 //!
 mod kyber1024;
-#[cfg(any(feature = "kyber768", test))]
-mod kyber768;
-#[cfg(any(feature = "mlkem1024", test))]
-mod mlkem1024;
 
 use crate::{Result, SignalProtocolError};
 
@@ -144,24 +140,14 @@ impl<T: Parameters> DynParameters for T {
 /// Designates a supported KEM protocol
 #[derive(Display, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum KeyType {
-    /// Kyber768 key
-    #[cfg(any(feature = "kyber768", test))]
-    Kyber768,
     /// Kyber1024 key
     Kyber1024,
-    /// ML-KEM 1024 key
-    #[cfg(any(feature = "mlkem1024", test))]
-    MLKEM1024,
 }
 
 impl KeyType {
     fn value(&self) -> u8 {
         match self {
-            #[cfg(any(feature = "kyber768", test))]
-            KeyType::Kyber768 => 0x07,
             KeyType::Kyber1024 => 0x08,
-            #[cfg(any(feature = "mlkem1024", test))]
-            KeyType::MLKEM1024 => 0x0A,
         }
     }
 
@@ -170,11 +156,7 @@ impl KeyType {
     /// Declared `const` to encourage inlining.
     const fn parameters(&self) -> &'static dyn DynParameters {
         match self {
-            #[cfg(any(feature = "kyber768", test))]
-            KeyType::Kyber768 => &kyber768::Parameters,
             KeyType::Kyber1024 => &kyber1024::Parameters,
-            #[cfg(any(feature = "mlkem1024", test))]
-            KeyType::MLKEM1024 => &mlkem1024::Parameters,
         }
     }
 }
@@ -184,11 +166,7 @@ impl TryFrom<u8> for KeyType {
 
     fn try_from(x: u8) -> Result<Self> {
         match x {
-            #[cfg(any(feature = "kyber768", test))]
-            0x07 => Ok(KeyType::Kyber768),
             0x08 => Ok(KeyType::Kyber1024),
-            #[cfg(any(feature = "mlkem1024", test))]
-            0x0A => Ok(KeyType::MLKEM1024),
             t => Err(SignalProtocolError::BadKEMKeyType(t)),
         }
     }
@@ -531,48 +509,6 @@ mod tests {
         assert_eq!(kyber1024::Parameters::CIPHERTEXT_LENGTH + 1, ct.len());
         assert_eq!(
             kyber1024::Parameters::SHARED_SECRET_LENGTH,
-            ss_for_sender.len()
-        );
-        let ss_for_recipient = kp.secret_key.decapsulate(&ct).expect("decapsulation works");
-        assert_eq!(ss_for_recipient, ss_for_sender);
-    }
-
-    #[test]
-    fn test_kyber768_keypair() {
-        let kp = KeyPair::generate(KeyType::Kyber768);
-        assert_eq!(
-            kyber768::Parameters::SECRET_KEY_LENGTH + 1,
-            kp.secret_key.serialize().len()
-        );
-        assert_eq!(
-            kyber768::Parameters::PUBLIC_KEY_LENGTH + 1,
-            kp.public_key.serialize().len()
-        );
-        let (ss_for_sender, ct) = kp.public_key.encapsulate();
-        assert_eq!(kyber768::Parameters::CIPHERTEXT_LENGTH + 1, ct.len());
-        assert_eq!(
-            kyber768::Parameters::SHARED_SECRET_LENGTH,
-            ss_for_sender.len()
-        );
-        let ss_for_recipient = kp.secret_key.decapsulate(&ct).expect("decapsulation works");
-        assert_eq!(ss_for_recipient, ss_for_sender);
-    }
-
-    #[test]
-    fn test_mlkem1024_keypair() {
-        let kp = KeyPair::generate(KeyType::MLKEM1024);
-        assert_eq!(
-            mlkem1024::Parameters::SECRET_KEY_LENGTH + 1,
-            kp.secret_key.serialize().len()
-        );
-        assert_eq!(
-            mlkem1024::Parameters::PUBLIC_KEY_LENGTH + 1,
-            kp.public_key.serialize().len()
-        );
-        let (ss_for_sender, ct) = kp.public_key.encapsulate();
-        assert_eq!(mlkem1024::Parameters::CIPHERTEXT_LENGTH + 1, ct.len());
-        assert_eq!(
-            mlkem1024::Parameters::SHARED_SECRET_LENGTH,
             ss_for_sender.len()
         );
         let ss_for_recipient = kp.secret_key.decapsulate(&ct).expect("decapsulation works");
