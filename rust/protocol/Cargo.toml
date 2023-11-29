@@ -10,9 +10,6 @@ authors = ["Signal Messenger LLC"]
 edition = "2021"
 license = "AGPL-3.0-only"
 
-[lib]
-crate-type = ["cdylib"]
-
 [dependencies]
 signal-crypto = { path = "../crypto" }
 aes = { version = "0.8.3", features = ["zeroize"] }
