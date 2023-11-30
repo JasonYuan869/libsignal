@@ -38,7 +38,7 @@ pqc_kyber = { version = "0.7.1", features = ["kyber1024"] }
 getrandom = "*"
 
 [features]
-wasm = ["pqc_kyber/wasm", "getrandom/js"]
+wasm = ["getrandom/js"]
 
 [dev-dependencies]
 criterion = "0.5"
